@@ -1,4 +1,4 @@
-# PChcker
+# PChecker
 
 灵活的参数管理系统
 
