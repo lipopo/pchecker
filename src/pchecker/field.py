@@ -77,7 +77,7 @@ class Field(metaclass=MetaField):
                     origins = [origins]
                 for origin in origins:
                     for store in ognfield.store:
-                        _value = store.load(origin)
+                        _value = store._load(origin)
                         if _value is not None:
                             # NOTE: 为了保证设置的默认值生效，所以采用该机制
                             ognfield.default_value = _value
@@ -122,7 +122,7 @@ class Field(metaclass=MetaField):
         _value = None
         for origin in origins:
             for store in (self.store or []):
-                _value = store.load(origin)
+                _value = store._load(origin)
                 if _value is not None:
                     self.store_loaded = True
                     break

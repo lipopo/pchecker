@@ -3,7 +3,7 @@ from typing import Any, Union
 
 class Store:
 
-    def load(self, origin: str) -> Union[Any, None]:
+    def _load(self, origin: str) -> Union[Any, None]:
         entry_list = origin.split(".")
 
         try:
