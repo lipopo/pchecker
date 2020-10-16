@@ -20,7 +20,7 @@ class MetaParam(type):
         for base in cls_bases:
             if hasattr(base, "named_fields"):
                 base_name_fields.extend(base.named_fields)
-
+        default_store = cls_dict.get("default_store", None)
         named_fields = base_name_fields + cls_dict.get("named_fields", [])
         for n, v in cls_dict.items():
             if isinstance(v, Field):
@@ -30,6 +30,9 @@ class MetaParam(type):
 
                 if v.name is None:
                     v.name = n
+
+                if default_store is not None:
+                    v.default_store = default_store
 
                 if v.func is None:
                     def func(ins, default_value, origin=None):
@@ -68,6 +71,7 @@ class MetaParam(type):
 
 
 class Param(metaclass=MetaParam):
+    default_store = None
 
     def __init__(self, *args, **kwargs):
         ...

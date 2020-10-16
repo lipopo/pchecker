@@ -23,6 +23,7 @@ class Field(metaclass=MetaField):
     func = None
     name = None
     store_loaded = False
+    default_store = None
     multi_origin = False
     origin_loaded = None
 
@@ -88,7 +89,8 @@ class Field(metaclass=MetaField):
 
             # 生成数据
             if self.multi_origin:
-                value = self.func(ins, ognfield.default_value, origin=ognfield.origin_loaded)
+                value = self.func(
+                    ins, ognfield.default_value, origin=ognfield.origin_loaded)
             else:
                 value = self.func(ins, ognfield.default_value)
 
@@ -113,12 +115,15 @@ class Field(metaclass=MetaField):
             wrap_field.setter,
             wrap_field.store
         )(wrap_field.func, False)
+        # XXX: set default store
+        field.default_store = wrap_field.default_store
         return field
 
     def load(self, data):
         origins = self.origin
         if isinstance(self.origin, str):
             origins = [origins]
+
         _value = None
         for origin in origins:
             for store in (self.store or []):
@@ -126,7 +131,11 @@ class Field(metaclass=MetaField):
                 if _value is not None:
                     self.store_loaded = True
                     break
-
+            if self.default_store is not None:
+                _value = self.default_store._load(origin)
+                if _value is not None:
+                    self.store_loaded = True
+                    break
             if (_value or data.get(origin)) is not None:
                 _value = (_value or data.get(origin))
                 self.origin_loaded = origin
@@ -143,7 +152,7 @@ def FieldFactory(
         origin=None,
         default_value=None,
         setter=None,
-        store=None
+        store=[]
     ):
     """
     Field工厂函数
@@ -155,6 +164,10 @@ def FieldFactory(
 
             a = FieldFactory(get_a)
 
+    @param origin 源点信息
+    @param default_value 默认值
+    @param setter 数据设置流程
+    @param store 数据对象
     @param factory_func 工厂函数 required!
     """
     field = Field(origin, default_value, setter, store)(factory_func, False)

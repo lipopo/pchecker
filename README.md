@@ -156,3 +156,24 @@ p3 = P3()
 
 print(p1.a, p2.a, p3.a) # 221 123 221
 ```
+
+#### 高级教程
+
+- default_store
+
+Add store in param level
+
+```python
+class StoreB(Store, Param):
+    @Field
+    def args(self, default_value):
+        return {
+            "a": 1
+        }
+
+store_b = StoreB()
+
+class ParamA(Param):
+    default_store = store_b
+    a = Field("args.a")
+```
