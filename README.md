@@ -177,3 +177,24 @@ class ParamA(Param):
     default_store = store_b
     a = Field("args.a")
 ```
+
+
+- parameter check
+
+```python
+class ParamA(Param):
+    a: str = Field()
+    b: int = Field()
+```
+
+- Destory Field
+
+```python
+class ParamA(Param):
+    a: str = Field()
+    b: str = Field()
+
+
+class ParamB(ParamA):
+    a: Destory
+```

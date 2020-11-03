@@ -67,7 +67,7 @@ class MetaParam(type):
                 v.checker = annotation_map.get(k, None)
                 v.checker_pointer = checker_pointer
 
-            if isinstance(v.checker, Destory):
+            if isinstance(annotation_map.get(k, None), Destory):
                 # 参数弃置
                 cls_dict.pop(k, None)
                 for base in cls_bases:
