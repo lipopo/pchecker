@@ -5,7 +5,9 @@
 
 @createtime Tue, 13 Oct 2020 09:31:39 +0800
 """
-from pchecker.field import Field, FieldFactory
+from pchecker.annotation import Annotation, Destory, AnnotationMeta, IsInstance
+from pchecker.field import Field
+from pchecker.lifecycle import Lifecycle
 
 
 class MetaParam(type):
@@ -16,12 +18,29 @@ class MetaParam(type):
         @intent
             - 构建named_fields，囊括所有已构建的field
         """
+        checker_pointer = cls_dict.get("checker_pointer", Lifecycle.Undefined)
+
         base_name_fields = []
         for base in cls_bases:
             if hasattr(base, "named_fields"):
                 base_name_fields.extend(base.named_fields)
         default_store = cls_dict.get("default_store", None)
-        named_fields = base_name_fields + cls_dict.get("named_fields", [])
+        _named_fields = base_name_fields + cls_dict.get("named_fields", [])
+
+        annotation_map = {}
+        for base in cls_bases:
+            if hasattr(base, "annotation_map"):
+                annotation_map.update(base.annotation_map)
+
+        annotations = cls_dict.get("__annotations__", {})
+        for field_name, annotation in annotations.items():
+            if isinstance(annotation, Annotation):
+                annotation_map[field_name] = annotation
+            elif isinstance(annotation, AnnotationMeta):
+                annotation_map[field_name] = annotation()
+            else:
+                annotation_map[field_name] = IsInstance(annotation)
+
         for n, v in cls_dict.items():
             if isinstance(v, Field):
                 # setup named field
@@ -37,11 +56,29 @@ class MetaParam(type):
                 if v.func is None:
                     def func(ins, default_value, origin=None):
                         return default_value
-
                     v.func = func
-                named_fields.append((n, v))
+
+                _named_fields.append((n, v))
+
+        named_fields = []
+
+        for k, v in _named_fields:
+            if v.checker is None:
+                v.checker = annotation_map.get(k, None)
+                v.checker_pointer = checker_pointer
+
+            if isinstance(v.checker, Destory):
+                # 参数弃置
+                cls_dict.pop(k, None)
+                for base in cls_bases:
+                    if hasattr(base, k):
+                        delattr(base, k)
+                continue
+            named_fields.append((k, v))
+
         new_cls = super().__new__(cls, cls_name, cls_bases, cls_dict)
         new_cls.named_fields = named_fields
+        new_cls.annotation_map = annotation_map
         return new_cls
 
     def __call__(cls, *args, **kwargs):
@@ -72,6 +109,7 @@ class MetaParam(type):
 
 class Param(metaclass=MetaParam):
     default_store = None
+    checker_pointer = Lifecycle.Undefined
 
     def __init__(self, *args, **kwargs):
         ...

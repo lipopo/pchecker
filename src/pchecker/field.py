@@ -8,6 +8,9 @@
 from functools import wraps
 from typing import Union, List
 
+from pchecker.lifecycle import Lifecycle
+from pchecker.exception import CheckParameterError
+
 
 class MetaField(type):
     def __call__(cls, *args, **kwargs):
@@ -26,10 +29,12 @@ class Field(metaclass=MetaField):
     default_store = None
     multi_origin = False
     origin_loaded = None
+    checker = None  # 参数检查其
+    checker_pointer = Lifecycle.Undefined
 
     def __init__(
         self,
-        origin: Union[None, str, List[str]]=None,
+        origin: Union[None, str, List[str]] = None,
         default_value=None,
         setter=None,
         store=None
@@ -59,8 +64,13 @@ class Field(metaclass=MetaField):
 
     def __call__(self, func, load_name=True):
         name = func.__name__
+
+        if self.checker is None:
+            self.checker = func.__annotations__.get("return", None)
+
         if self.name is None and load_name:
             self.name = name
+
         self.func = func
         return self
 
@@ -94,9 +104,18 @@ class Field(metaclass=MetaField):
             else:
                 value = self.func(ins, ognfield.default_value)
 
+            if Lifecycle.Inusing in self.checker_pointer:
+                try:
+                    value = self.checker(value)
+                except CheckParameterError:
+                    value = ognfield.default_value
+
             return value
 
         def set_field(ins, value):
+            if Lifecycle.Setting in self.checker_pointer:
+                value = self.checker(value)
+
             # 获取唯一的数据元购
             ognfield = ins.fields.get(str(self.origin))
             # 设置默认value，如果存在setter,则执行setter流程
@@ -152,8 +171,7 @@ def FieldFactory(
         origin=None,
         default_value=None,
         setter=None,
-        store=[]
-    ):
+        store=[]):
     """
     Field工厂函数
 

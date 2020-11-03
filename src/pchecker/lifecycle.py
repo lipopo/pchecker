@@ -9,7 +9,8 @@ from enum import auto, Flag
 
 
 class Lifecycle(Flag):
-    Perbuild = auto()
-    Building = auto()
-    Inusing = auto()
-    Destory = auto()
+    Perbuild = auto()  # 预构建时检验
+    Setting = auto()  # 设置时检验
+    Inusing = auto()  # 使用时检验
+    Destory = auto()  # 删除时检验
+    Undefined = auto()
