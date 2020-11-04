@@ -6,7 +6,7 @@ with open("README.md", "rb") as f:
 
 setup(
     name="ParameterChecker",
-    version="0.0.4",
+    version="0.0.5",
     author="lipo",
     author_email="lipo8081@gmail.com",
     description="Parameter manager system",
@@ -18,7 +18,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir={"":"src"},
+    package_dir={"": "src"},
     packages=find_packages(where="src"),
     python_requires='>3.0'
 )

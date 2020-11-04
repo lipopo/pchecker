@@ -138,6 +138,19 @@ class Field(metaclass=MetaField):
         field.default_store = wrap_field.default_store
         return field
 
+    @staticmethod
+    def get_origin_by_split(origin, data):
+        if "." not in origin:
+            return None
+
+        _value = data
+        for origin_splited in origin.split("."):
+            _value = _value.get(origin_splited, None)
+            if _value is None:
+                return None
+        else:
+            return _value
+
     def load(self, data):
         origins = self.origin
         if isinstance(self.origin, str):
@@ -155,8 +168,11 @@ class Field(metaclass=MetaField):
                 if _value is not None:
                     self.store_loaded = True
                     break
-            if (_value or data.get(origin)) is not None:
-                _value = (_value or data.get(origin))
+
+            data_with_splited = self.get_origin_by_split(origin, data)
+
+            if (_value or data.get(origin) or data_with_splited) is not None:
+                _value = (_value or data.get(origin) or data_with_splited)
                 self.origin_loaded = origin
                 self.store_loaded = True
                 break
